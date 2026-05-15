@@ -228,19 +228,19 @@ static void enterDumpMenu(ConfigItemDumpAmiibo* item)
 
             if (item->state == DUMP_STATE_INIT) {
                 int yOff = SCREEN_HEIGHT / 2 - (6 * 26) / 2 - 8;
-                const char* text = "Welcome to the Amiibo Dumper!";
+                const char* text = "欢迎使用 Amiibo 导出工具！";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(text) / 2, yOff, text);
                 yOff += 26;
 
-                text = "After pressing \ue000 hold one of your Amiibo figures";
+                text = "按下 \ue000 后，将 Amiibo 实物";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(text) / 2, yOff, text);
                 yOff += 26;
 
-                text = "to the \ue099 symbol on your Gamepad.";
+                text = "贴近 GamePad 上的 \ue099 NFC 标志。";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(text) / 2, yOff, text);
                 yOff += 26 + 16;
 
-                text = "The dump will be saved to the";
+                text = "导出文件将保存到 SD 卡路径：";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(text) / 2, yOff, text);
                 yOff += 26;
 
@@ -248,19 +248,19 @@ static void enterDumpMenu(ConfigItemDumpAmiibo* item)
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(folderText.c_str()) / 2, yOff, folderText.c_str());
                 yOff += 26;
 
-                text = "folder on your SD Card.";
+                text = "（如下方所示文件夹）";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(text) / 2, yOff, text);
             } else if (item->state == DUMP_STATE_WAITING) {
                 int yOff = SCREEN_HEIGHT / 2 - (2 * 26) / 2;
-                const char* text = "Waiting for Amiibo...";
+                const char* text = "等待靠近 Amiibo…";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(text) / 2, yOff, text);
                 yOff += 26;
 
-                std::string timeoutText = std::to_string(TIMEOUT_SECONDS - OSTicksToSeconds(OSGetSystemTick() - readStart)) + " seconds remaining.";
+                std::string timeoutText = "剩余 " + std::to_string(TIMEOUT_SECONDS - OSTicksToSeconds(OSGetSystemTick() - readStart)) + " 秒";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(timeoutText.c_str()) / 2, yOff, timeoutText.c_str());
             } else if (item->state == DUMP_STATE_COMPLETED) {
                 int yOff = SCREEN_HEIGHT / 2 - (26 + 22) / 2;
-                const char* text = "Dump complete! Dump was saved to:";
+                const char* text = "导出完成！已保存到：";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(text) / 2, yOff, text);
                 yOff += 26;
 
@@ -269,21 +269,21 @@ static void enterDumpMenu(ConfigItemDumpAmiibo* item)
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(dumpPathText.c_str()) / 2, yOff, dumpPathText.c_str());
             } else if (item->state == DUMP_STATE_ERROR) {
                 int yOff = SCREEN_HEIGHT / 2 - (3 * 26) / 2;
-                const char* text = "An error has occured!";
+                const char* text = "发生错误！";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(text) / 2, yOff, text);
                 yOff += 26;
 
-                text = "Make sure the Gamepad is properly connected";
+                text = "请确认 GamePad 已正确连接，";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(text) / 2, yOff, text);
                 yOff += 26;
 
-                text = "and no other title is using NFC.";
+                text = "且当前没有其它程序占用 NFC。";
                 DrawUtils::print(SCREEN_WIDTH / 2 - DrawUtils::getTextWidth(text) / 2, yOff, text);
             }
 
             // draw top bar
             DrawUtils::setFontSize(24);
-            DrawUtils::print(16, 6 + 24, "re_nfpii - Dump Amiibo");
+            DrawUtils::print(16, 6 + 24, "re_nfpii - 导出 Amiibo");
             DrawUtils::setFontSize(18);
             DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
 
@@ -292,17 +292,17 @@ static void enterDumpMenu(ConfigItemDumpAmiibo* item)
             DrawUtils::setFontSize(18);
 
             if (item->state == DUMP_STATE_WAITING) {
-                DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue001 Abort");
+                DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue001 中止");
             } else {
-                DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue001 Back");
+                DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue001 返回");
             }
 
             if (item->state == DUMP_STATE_COMPLETED) {
-                DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Continue", true);
+                DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 继续", true);
             } else if (item->state == DUMP_STATE_ERROR) {
-                DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Try again", true);
+                DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 重试", true);
             } else if (item->state == DUMP_STATE_INIT) {
-                DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Start", true);
+                DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 开始", true);
             }
 
             DrawUtils::endDraw();

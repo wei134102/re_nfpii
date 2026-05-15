@@ -184,7 +184,7 @@ static void enterSelectionMenu(ConfigItemSelectAmiibo* item)
             closedir(dir);
         } else {
             DEBUG_FUNCTION_LINE("Cannot open '%s'", item->currentPath.c_str());
-            ConfigItemLog_PrintType(LOG_TYPE_ERROR, "Failed to open amiibo folder, make sure it exists!");
+            ConfigItemLog_PrintType(LOG_TYPE_ERROR, "无法打开 Amiibo 文件夹，请确认路径存在！");
             return;
         }
 
@@ -410,7 +410,7 @@ static void enterSelectionMenu(ConfigItemSelectAmiibo* item)
 
                 // draw top bar
                 DrawUtils::setFontSize(24);
-                DrawUtils::print(16, 6 + 24, "re_nfpii - Select Amiibo");
+                DrawUtils::print(16, 6 + 24, "re_nfpii - 选择 Amiibo");
                 DrawUtils::setFontSize(18);
                 std::string path = item->currentPath.c_str();
                 // remove root path
@@ -425,8 +425,8 @@ static void enterSelectionMenu(ConfigItemSelectAmiibo* item)
                 // draw bottom bar
                 DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
                 DrawUtils::setFontSize(18);
-                DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
-                DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue002 Favorite / \ue000 Select", true);
+                DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d 移动 ");
+                DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue002 收藏 / \ue000 确认", true);
 
                 // draw scroll indicators
                 DrawUtils::setFontSize(24);
@@ -439,7 +439,7 @@ static void enterSelectionMenu(ConfigItemSelectAmiibo* item)
 
                 // draw back button
                 DrawUtils::setFontSize(18);
-                const char* exitHint = "\ue001 Back";
+                const char* exitHint = "\ue001 返回";
                 DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 
                 DrawUtils::endDraw();
@@ -479,7 +479,7 @@ static int32_t ConfigItemSelectAmiibo_getCurrentValueDisplay(void* context, char
     ConfigItemSelectAmiibo* item = (ConfigItemSelectAmiibo*) context;
 
     if (item->selectedAmiibo.empty()) {
-        strncpy(out_buf, "None", out_size);
+        strncpy(out_buf, "无", out_size);
         return 0;
     }
 

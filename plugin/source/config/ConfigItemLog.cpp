@@ -160,7 +160,7 @@ static void enterLogViewer(ConfigItemLog* item)
 
             // draw top bar
             DrawUtils::setFontSize(24);
-            DrawUtils::print(16, 6 + 24, "re_nfpii - Log viewer");
+            DrawUtils::print(16, 6 + 24, "re_nfpii - 日志");
             DrawUtils::setFontSize(18);
             DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, getLogStats(item).c_str(), true);
             DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
@@ -168,8 +168,8 @@ static void enterLogViewer(ConfigItemLog* item)
             // draw bottom bar
             DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
             DrawUtils::setFontSize(18);
-            DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Scroll ");
-            DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue001 Back", true);
+            DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d 滚动 ");
+            DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue001 返回", true);
 
             // draw scroll indicators
             DrawUtils::setFontSize(24);

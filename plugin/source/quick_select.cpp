@@ -1,6 +1,7 @@
 #include "quick_select.h"
 
 #include <forward_list>
+#include <optional>
 #include <wups.h>
 #include <nfpii.h>
 #include <notifications/notifications.h>
@@ -106,6 +107,10 @@ void migrateStorage()
 
 static void cycleQuickSelect(WUPSButtonCombo_ControllerTypes, WUPSButtonCombo_ComboHandle, void*)
 {
+    if (currentQuickSelectCombination == 0) {
+        return;
+    }
+
     if (ConfigItemSelectAmiibo_GetFavorites().empty()) {
         return;
     }
@@ -120,7 +125,7 @@ static void cycleQuickSelect(WUPSButtonCombo_ControllerTypes, WUPSButtonCombo_Co
     NfpiiSetEmulationState(NFPII_EMULATION_ON);
 
     std::string name = path.substr(path.find_last_of('/') + 1);
-    std::string notifText = "re_nfpii: Selected \"" + name + "\"";
+    std::string notifText = "re_nfpii：已选择「" + name + "」";
 
     if (NotificationModule_InitLibrary() == NOTIFICATION_MODULE_RESULT_SUCCESS) {
         NotificationModule_AddInfoNotification(notifText.c_str());
@@ -130,15 +135,19 @@ static void cycleQuickSelect(WUPSButtonCombo_ControllerTypes, WUPSButtonCombo_Co
 
 static void toggleEmulation(WUPSButtonCombo_ControllerTypes, WUPSButtonCombo_ComboHandle, void*)
 {
+    if (currentToggleEmulationCombination == 0) {
+        return;
+    }
+
     NfpiiEmulationState state = NfpiiGetEmulationState();
     std::string notifText;
     if (state == NFPII_EMULATION_ON) {
         NfpiiSetEmulationState(NFPII_EMULATION_OFF);
-        notifText = "re_nfpii: Disabled emulation";
+        notifText = "re_nfpii：已关闭模拟";
     } else {
         NfpiiSetEmulationState(NFPII_EMULATION_ON);
-        notifText = "re_nfpii: Enabled emulation";
-    };
+        notifText = "re_nfpii：已开启模拟";
+    }
 
     if (NotificationModule_InitLibrary() == NOTIFICATION_MODULE_RESULT_SUCCESS) {
         NotificationModule_AddInfoNotification(notifText.c_str());
@@ -156,32 +165,55 @@ std::string string_format(const std::string& format, Args... args)
     return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
 
+namespace {
+/** WUPS rejects an empty mask; these placeholders are only used while storage is 0 (callbacks no-op until user binds). */
+constexpr WUPSButtonCombo_Buttons kUnassignedQuickSelectRegistrationMask = static_cast<WUPSButtonCombo_Buttons>(
+        WUPS_BUTTON_COMBO_BUTTON_ZL | WUPS_BUTTON_COMBO_BUTTON_ZR | WUPS_BUTTON_COMBO_BUTTON_PLUS);
+constexpr WUPSButtonCombo_Buttons kUnassignedToggleRegistrationMask = static_cast<WUPSButtonCombo_Buttons>(
+        WUPS_BUTTON_COMBO_BUTTON_ZL | WUPS_BUTTON_COMBO_BUTTON_ZR | WUPS_BUTTON_COMBO_BUTTON_MINUS);
+} // namespace
+
 WUPSButtonCombo_ComboHandle RegisterButtonCombo(const std::string_view label, const WUPSButtonCombo_Buttons buttonCombo,
-    const WUPSButtonCombo_ComboCallback callback)
+    bool isToggleEmulationSlot, const WUPSButtonCombo_ComboCallback callback)
 {
-    const auto buttonComboLabel = string_format("re_nfpii: %s", label.data());
+    const auto buttonComboLabel = string_format("re_nfpii：%s", label.data());
     WUPSButtonCombo_ComboStatus status = WUPS_BUTTON_COMBO_COMBO_STATUS_INVALID_STATUS;
     WUPSButtonCombo_Error err = WUPS_BUTTON_COMBO_ERROR_UNKNOWN_ERROR;
-    auto res = WUPSButtonComboAPI::CreateComboPressDown(buttonComboLabel,
-                                                        buttonCombo,
-                                                        callback,
-                                                        nullptr,
-                                                        status,
-                                                        err);
+
+    const WUPSButtonCombo_Buttons registerMask =
+            (buttonCombo != 0) ? buttonCombo
+                               : (isToggleEmulationSlot ? kUnassignedToggleRegistrationMask : kUnassignedQuickSelectRegistrationMask);
+
+    std::optional<WUPSButtonComboAPI::ButtonCombo> res;
+    if (buttonCombo == 0) {
+        res = WUPSButtonComboAPI::CreateComboPressDownObserver(buttonComboLabel,
+                                                               registerMask,
+                                                               callback,
+                                                               nullptr,
+                                                               status,
+                                                               err);
+    } else {
+        res = WUPSButtonComboAPI::CreateComboPressDown(buttonComboLabel,
+                                                       registerMask,
+                                                       callback,
+                                                       nullptr,
+                                                       status,
+                                                       err);
+    }
     if (!res || err != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
-        if (buttonCombo != 0) { // Old button combo module doesn't support empty button combos
-            const std::string errorMsg = string_format("re_nfpii: Failed to register button combo \"%s\"", label.data());
+        if (buttonCombo != 0) {
+            const std::string errorMsg = string_format("re_nfpii：无法注册按键组合「%s」", label.data());
             DEBUG_FUNCTION_LINE("%s", errorMsg.c_str());
             NotificationModule_AddErrorNotification(errorMsg.c_str());
         }
     } else {
         if (status == WUPS_BUTTON_COMBO_COMBO_STATUS_CONFLICT) {
-            const auto conflictMsg = string_format("re_nfpii: \"%s\"-combo was disabled due to a conflict. Please assign a different combo", label.data());
+            const auto conflictMsg = string_format("re_nfpii：「%s」组合因冲突被禁用，请更换按键", label.data());
             DEBUG_FUNCTION_LINE("%s", conflictMsg.c_str());
 
             NotificationModule_AddInfoNotification(conflictMsg.c_str());
         } else if (status != WUPS_BUTTON_COMBO_COMBO_STATUS_VALID) {
-            const auto conflictMsg = string_format("re_nfpii: Unknown error happened while registering button combo \"%s\"", label.data());
+            const auto conflictMsg = string_format("re_nfpii：注册按键组合「%s」时发生未知错误", label.data());
             DEBUG_FUNCTION_LINE("%s", conflictMsg.c_str());
 
             NotificationModule_AddInfoNotification(conflictMsg.c_str());
@@ -195,6 +227,6 @@ WUPSButtonCombo_ComboHandle RegisterButtonCombo(const std::string_view label, co
 
 void RegisterButtonCombos()
 {
-    sQuickSelectButtonComboHandle = RegisterButtonCombo("Quick Select", currentQuickSelectCombination, cycleQuickSelect);
-    sToggleEmulationButtonComboHandle = RegisterButtonCombo("Toggle Emulation", currentToggleEmulationCombination, toggleEmulation);
+    sQuickSelectButtonComboHandle = RegisterButtonCombo("快速选择", currentQuickSelectCombination, false, cycleQuickSelect);
+    sToggleEmulationButtonComboHandle = RegisterButtonCombo("切换模拟", currentToggleEmulationCombination, true, toggleEmulation);
 }

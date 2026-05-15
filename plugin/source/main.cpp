@@ -28,7 +28,7 @@
 #define VERSION_STRING(x, y, z) "v" STR_VALUE(x) "." STR_VALUE(y) "." STR_VALUE(z)
 
 WUPS_PLUGIN_NAME("re_nfpii");
-WUPS_PLUGIN_DESCRIPTION("A nn_nfp reimplementation with support for Amiibo emulation");
+WUPS_PLUGIN_DESCRIPTION("nn_nfp 再实现：支持 Amiibo 文件模拟（界面汉化版）");
 WUPS_PLUGIN_VERSION(VERSION_STRING(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH));
 WUPS_PLUGIN_AUTHOR("GaryOderNichts");
 WUPS_PLUGIN_LICENSE("GPLv2");
@@ -68,7 +68,7 @@ INITIALIZE_PLUGIN()
         DEBUG_FUNCTION_LINE("Failed to init notifications");
     }
 
-    WUPSConfigAPIOptionsV1 configOptions = {.name = "re_nfpii"};
+    WUPSConfigAPIOptionsV1 configOptions = {.name = "re_nfpii（Amiibo 模拟）"};
     if (WUPSConfigAPI_Init(configOptions, ConfigMenuOpenedCallback, ConfigMenuClosedCallback) != WUPSCONFIG_API_RESULT_SUCCESS) {
         DEBUG_FUNCTION_LINE("Failed to init config api");
     }
@@ -205,45 +205,45 @@ WUPSConfigAPICallbackStatus ConfigMenuOpenedCallback(WUPSConfigCategoryHandle ro
 {
     WUPSConfigCategory root = WUPSConfigCategory(rootHandle);
     try {
-        auto settingsCat = WUPSConfigCategory::Create("Settings");
+        auto settingsCat = WUPSConfigCategory::Create("设置");
 
         constexpr WUPSConfigItemMultipleValues::ValuePair possibleValues[] = {
-            {NFPII_EMULATION_OFF, "Emulation Disabled"},
-            {NFPII_EMULATION_ON, "Emulation Enabled"},
+            {NFPII_EMULATION_OFF, "模拟已关闭"},
+            {NFPII_EMULATION_ON, "模拟已开启"},
         };
 
         // TODO: Double check if `NFPII_EMULATION_OFF`is the correct default value.
-        settingsCat.add(WUPSConfigItemMultipleValues::CreateFromValue("state", "Set State",
+        settingsCat.add(WUPSConfigItemMultipleValues::CreateFromValue("state", "模拟状态",
                                                                       NFPII_EMULATION_OFF, NfpiiGetEmulationState(),
                                                                       possibleValues,
                                                                       stateChangedCallback));
 
 
         constexpr WUPSConfigItemMultipleValues::ValuePair removeAfterValues[] = {
-            {0, "Never"},
-            {1, "0.5s"},
-            {2, "1.0s"},
-            {3, "1.5s"},
-            {4, "2.0s"},
-            {5, "2.5s"},
-            {6, "3.0s"},
-            {7, "3.5s"},
-            {8, "4.0s"},
-            {9, "4.5s"},
-            {10, "5.0s"},
-            {11, "5.5s"},
-            {12, "6.0s"},
-            {13, "6.5s"},
-            {14, "7.0s"},
-            {15, "7.5s"},
-            {16, "8.0s"},
-            {17, "8.5s"},
-            {18, "9.0s"},
-            {19, "9.5s"},
-            {20, "10.0s"}
+            {0, "从不"},
+            {1, "0.5 秒"},
+            {2, "1.0 秒"},
+            {3, "1.5 秒"},
+            {4, "2.0 秒"},
+            {5, "2.5 秒"},
+            {6, "3.0 秒"},
+            {7, "3.5 秒"},
+            {8, "4.0 秒"},
+            {9, "4.5 秒"},
+            {10, "5.0 秒"},
+            {11, "5.5 秒"},
+            {12, "6.0 秒"},
+            {13, "6.5 秒"},
+            {14, "7.0 秒"},
+            {15, "7.5 秒"},
+            {16, "8.0 秒"},
+            {17, "8.5 秒"},
+            {18, "9.0 秒"},
+            {19, "9.5 秒"},
+            {20, "10.0 秒"}
         };
 
-        settingsCat.add(WUPSConfigItemMultipleValues::CreateFromValue("remove_after", "Remove after",
+        settingsCat.add(WUPSConfigItemMultipleValues::CreateFromValue("remove_after", "读卡后移除（计时）",
                                                                       0, NfpiiGetEmulationState(),
                                                                       removeAfterValues,
                                                                       removeAfterChangedCallback));
@@ -262,32 +262,40 @@ WUPSConfigAPICallbackStatus ConfigMenuOpenedCallback(WUPSConfigCategoryHandle ro
 
 
         std::string currentAmiiboPath = NfpiiGetTagEmulationPath();
-        settingsCat.add(ConfigItemSelectAmiiboCPP::Create("select_amiibo", "Select Amiibo",
+        settingsCat.add(ConfigItemSelectAmiiboCPP::Create("select_amiibo", "选择 Amiibo",
                                                           TAG_EMULATION_PATH.c_str(), currentAmiiboPath.c_str(),
                                                           amiiboSelectedCallback));
 
-        settingsCat.add(WUPSConfigItemBoolean::Create("favorites_per_title", "Per-Title Favorites", false, favoritesPerTitle, favoritesPerTitleCallback));
+        settingsCat.add(WUPSConfigItemBoolean::Create("favorites_per_title", "按游戏分别收藏", false, favoritesPerTitle, favoritesPerTitleCallback));
 
         bool buttonCombosSupported = false;
         if (sQuickSelectButtonComboHandle != nullptr && sToggleEmulationButtonComboHandle != nullptr) {
             buttonCombosSupported = true;
-            settingsCat.add(WUPSConfigItemButtonCombo::Create("quick_select_combination", "Quick Select Combo",
-                                                              static_cast<WUPSButtonCombo_Buttons>(0),
+            settingsCat.add(WUPSConfigItemButtonCombo::Create("quick_select_combination", "快速切换收藏（按键组合）",
+                                                              currentQuickSelectCombination,
                                                               sQuickSelectButtonComboHandle,
                                                               quickSelectComboCallback));
 
-            settingsCat.add(WUPSConfigItemButtonCombo::Create("quick_remove_combination", "Toggle Emulation Combo",
-                                                              static_cast<WUPSButtonCombo_Buttons>(0),
+            settingsCat.add(WUPSConfigItemButtonCombo::Create("quick_remove_combination", "开关模拟（按键组合）",
+                                                              currentToggleEmulationCombination,
                                                               sToggleEmulationButtonComboHandle,
                                                               toggleEmulationComboCallback));
+
+            settingsCat.add(WUPSConfigItemStub::Create(
+                    "说明：打开本插件菜单为 L+十字键下+SELECT；上两项为游戏内快捷键，请分别进入并绑定按键。"));
         }
 
-        settingsCat.add(ConfigItemDumpAmiiboCPP::Create("dump_amiibo", "Dump Amiibo",
+        settingsCat.add(ConfigItemDumpAmiiboCPP::Create("dump_amiibo", "导出 Amiibo（实物）",
                                                         (TAG_EMULATION_PATH + "dumps").c_str()));
 
-        settingsCat.add(ConfigItemLogCPP::Create("log", "Logs"));
+        settingsCat.add(ConfigItemLogCPP::Create("log", "日志"));
         if (!buttonCombosSupported) {
-            settingsCat.add(WUPSConfigItemStub::Create("Please update to latest Aroma to be able to use button combos"));
+            settingsCat.add(WUPSConfigItemStub::Create(
+                    "无法注册按键组合：请更新 Aroma / 环境（需含 WUPS Button Combo 支持）。"));
+            settingsCat.add(WUPSConfigItemStub::Create(
+                    "成功后会出现两项：①在收藏（选卡界面按 X）的 Amiibo 间轮换 ②开关模拟；无出厂默认键。"));
+            settingsCat.add(WUPSConfigItemStub::Create(
+                    "打开本配置菜单：L + 十字键下 + SELECT（与上两项游戏内快捷键不是同一套）。"));
         }
         root.add(std::move(settingsCat));
     } catch (std::exception& e) {
